@@ -12,6 +12,8 @@ static const char LogTable256[256] = {
 	LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
 };
 
+
+
 static inline int ilog2_32(uint32_t v)
 {
 	uint32_t t, tt;
