@@ -1,0 +1,44 @@
+-----------------------------------------------
+  Analysis of the file system : minimap2 v2.18
+-----------------------------------------------
+
+** Filenames are sorted based on the Github repository file order(from 1 to 12).
+
+1. lib : contains simde tool which is a tool for SIMD instruction sets for systems which 
+dont natively support them.
+
+2. misc : includes a script which processes alignments in the PAF format, such as converting
+between formats, evaluating mapping accuracy, lifting over BED files based on alignment, and 
+calling variants from assembly-to-assembly alignment,...
+
+3. python : provides an interface to minimap2
+
+4. sse2neon : Provides a simple API translation layer between SSE intrincis to their
+corresponding ARM NEON versions
+
+SSE intrinsics are C/C++ functions that provide direct access to Intel's SSE (
+Streaming SIMD Extensions) instructions, allowing you to write highly optimized 
+low-level code for vectorized data processing (SIMD — Single Instruction, Multiple Data) 
+without using assembly.
+
+5. test : includes .fa files for testing.
+
+.fa files are FASTA files, which are text-based files used to represent nucleotide 
+or protein sequences. .fa is interchangeable with .fasta. 
+
+6. tex : some pearl and eval files. 
+
+7. FAQ.md : some questions and answers
+
+8. MANIFEST.in : useful for buidling
+
+9. Makefile 
+
+10. Makefile.simde 
+
+11. NEWS.md : Information regarding new updates and bug fixes
+
+12. README.md : Readme of the repository
+
+
+
