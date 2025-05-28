@@ -7,23 +7,42 @@
 #include "mmpriv.h"
 #include "ketopt.h"
 
+// define the version and the revision of minimap2
 #define MM_VERSION "2.18-r1015"
 
+// do this if we are building this on a ubuntu system
 #ifdef __linux__
+
+// add these system files
 #include <sys/resource.h>
 #include <sys/time.h>
+
+// this function increase the memory limit of the process if the process is ubuntu
 void liftrlimit()
 {
 	struct rlimit r;
+
+	// retrieves the current address space (virtual memory) limits of the process
 	getrlimit(RLIMIT_AS, &r);
+
+	// set the current limit to the maximum limit
 	r.rlim_cur = r.rlim_max;
+
+	// update the limit using setrlimit
 	setrlimit(RLIMIT_AS, &r);
 }
 #else
+
+// this function will execute for non-ubuntu OS, which will do nothing
 void liftrlimit() {}
 #endif
 
+// defines a list of long command-line options that Minimap2 supports, using a custom option-parsing structure called ko_longopt_t
 static ko_longopt_t long_options[] = {
+
+	// Matches --bucket-bits <value> command line argument
+	// Expects an argument
+	// Internally handled using case 300: in the switch-case
 	{ "bucket-bits",    ko_required_argument, 300 },
 	{ "mb-size",        ko_required_argument, 'K' },
 	{ "seed",           ko_required_argument, 302 },
@@ -79,9 +98,14 @@ static ko_longopt_t long_options[] = {
 	{ "mask-level",     ko_required_argument, 'M' },
 	{ "min-dp-score",   ko_required_argument, 's' },
 	{ "sam",            ko_no_argument,       'a' },
+
+	// marking the end of the list
 	{ 0, 0, 0 }
 };
 
+//Input: a string like "4G", "500M", or "1024K".
+//Returns: a 64-bit integer representing the numeric value with units parsed.
+// inline: suggests the compiler should try to embed this function's code at the call site for performance.
 static inline int64_t mm_parse_num(const char *str)
 {
 	double x;
@@ -93,8 +117,12 @@ static inline int64_t mm_parse_num(const char *str)
 	return (int64_t)(x + .499);
 }
 
+//helper used during command-line option parsing in Minimap2. 
+// It handles options that expect values like "yes" or "no" and sets or clears specific bit flags inside the mm_mapopt_t struct accordingly.
+// mm_mapopt_t *opt: a pointer to the structure that holds mapping options
 static inline void yes_or_no(mm_mapopt_t *opt, int flag, int long_idx, const char *arg, int yes_to_set)
 {
+	// set, reset the flag based on yes, no options
 	if (yes_to_set) {
 		if (strcmp(arg, "yes") == 0 || strcmp(arg, "y") == 0) opt->flag |= flag;
 		else if (strcmp(arg, "no") == 0 || strcmp(arg, "n") == 0) opt->flag &= ~flag;
@@ -108,38 +136,77 @@ static inline void yes_or_no(mm_mapopt_t *opt, int flag, int long_idx, const cha
 
 int main(int argc, char *argv[])
 {
+	// short command-line options, followed by: which requires an argument
 	const char *opt_str = "2aSDw:k:K:t:r:f:Vv:g:G:I:d:XT:s:x:Hcp:M:n:z:A:B:O:E:m:N:Qu:R:hF:LC:yYPo:";
+
+	//ketopt is a lightweight getopt-like option parser Minimap2 uses.
+	//KETOPT_INIT initializes the parser structure o
 	ketopt_t o = KETOPT_INIT;
+
+	// stores mapping options, like scoring, seeding, etc.
 	mm_mapopt_t opt;
+
+	// stores indexing options, used when reading/constructing indexes.
 	mm_idxopt_t ipt;
+
+	// pay attention to n_threads in the milticore pipeline
 	int i, c, n_threads = 3, n_parts, old_best_n = -1;
+
 	char *fnw = 0, *rg = 0, *junc_bed = 0, *s, *alt_list = 0;
 	FILE *fp_help = stderr;
+
+	// idx_rdr: the index reader (reads .mmi files), in minimap2, there is an option to run it using an index file
 	mm_idx_reader_t *idx_rdr;
+
+	// a pointer to an index structure, e.g., the minimizer index being mapped against
 	mm_idx_t *mi;
 
+	// Sets logging verbosity level.
+	// Levels:
+	// 0 = silent
+	// 1 = error
+	// 2 = warnings
+	// 3 = info/debug
 	mm_verbose = 3;
+
+	// increase the process memeory limit
 	liftrlimit();
+
+	// stores the start time of the program
 	mm_realtime0 = realtime();
+
+	// initializes ipt and opt with default values.
 	mm_set_opt(0, &ipt, &opt);
+
 
 	while ((c = ketopt(&o, argc, argv, 1, opt_str, long_options)) >= 0) { // test command line options and apply option -x/preset first
 		if (c == 'x') {
+
+			// handling the -x option first, which sets a preset configuration for the mapper
 			if (mm_set_opt(o.arg, &ipt, &opt) < 0) {
 				fprintf(stderr, "[ERROR] unknown preset '%s'\n", o.arg);
 				return 1;
 			}
+
+			// Triggered when an option that requires an argument (like -k) is missing its value i.e. ./minimap2 -k 
 		} else if (c == ':') {
 			fprintf(stderr, "[ERROR] missing option argument\n");
 			return 1;
+
+			// Triggered when the user passes an unrecognized flag i.e. ./minimap2 -Z 
 		} else if (c == '?') {
 			fprintf(stderr, "[ERROR] unknown option in \"%s\"\n", argv[o.i - 1]);
 			return 1;
 		}
 	}
+
+	//KETOPT_INIT initializes the parser structure o
 	o = KETOPT_INIT;
 
+	// get all the command line arguments and save the values in ipt structure
 	while ((c = ketopt(&o, argc, argv, 1, opt_str, long_options)) >= 0) {
+
+		// assign each value to symbols in ipt
 		if (c == 'w') ipt.w = atoi(o.arg);
 		else if (c == 'k') ipt.k = atoi(o.arg);
 		else if (c == 'H') ipt.flag |= MM_I_HPC;
@@ -287,6 +354,7 @@ int main(int argc, char *argv[])
 		opt.best_n = old_best_n, opt.flag |= MM_F_NO_PRINT_2ND;
 	}
 
+	// printing the helper options
 	if (argc == o.ind || fp_help == stdout) {
 		fprintf(fp_help, "Usage: minimap2 [options] <target.fa>|<target.idx> [query.fa] [...]\n");
 		fprintf(fp_help, "Options:\n");
