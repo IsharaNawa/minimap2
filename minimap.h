@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+// define some variables
 #define MM_F_NO_DIAG       0x001 // no exact diagonal hit
 #define MM_F_NO_DUAL       0x002 // skip pairs where query name is lexicographically larger than target name
 #define MM_F_CIGAR         0x004
@@ -106,6 +107,7 @@ typedef struct {
 	uint64_t batch_size;
 } mm_idxopt_t;
 
+// minimap mapping options
 typedef struct {
 	int64_t flag;    // see MM_F_* macros
 	int seed;
@@ -183,6 +185,7 @@ extern double mm_realtime0; // wall-clock timer
  *
  * @return 0 if success; -1 if _present_ unknown
  */
+// defined in options.c file
 int mm_set_opt(const char *preset, mm_idxopt_t *io, mm_mapopt_t *mo);
 int mm_check_opt(const mm_idxopt_t *io, const mm_mapopt_t *mo);
 

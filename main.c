@@ -5,6 +5,8 @@
 #include "bseq.h"
 #include "minimap.h"
 #include "mmpriv.h"
+
+// useful to use ko_longopt_t structure
 #include "ketopt.h"
 
 // define the version and the revision of minimap2
@@ -38,6 +40,7 @@ void liftrlimit() {}
 #endif
 
 // defines a list of long command-line options that Minimap2 supports, using a custom option-parsing structure called ko_longopt_t
+// ko_longopt_t structure comes from ketop.h
 static ko_longopt_t long_options[] = {
 
 	// Matches --bucket-bits <value> command line argument
@@ -120,6 +123,7 @@ static inline int64_t mm_parse_num(const char *str)
 //helper used during command-line option parsing in Minimap2. 
 // It handles options that expect values like "yes" or "no" and sets or clears specific bit flags inside the mm_mapopt_t struct accordingly.
 // mm_mapopt_t *opt: a pointer to the structure that holds mapping options
+// mm_mapopt_t comes from minimap.h
 static inline void yes_or_no(mm_mapopt_t *opt, int flag, int long_idx, const char *arg, int yes_to_set)
 {
 	// set, reset the flag based on yes, no options
@@ -141,12 +145,15 @@ int main(int argc, char *argv[])
 
 	//ketopt is a lightweight getopt-like option parser Minimap2 uses.
 	//KETOPT_INIT initializes the parser structure o
+	// ketopt_t structure comes from ketop.h
 	ketopt_t o = KETOPT_INIT;
 
 	// stores mapping options, like scoring, seeding, etc.
+	// mm_mapopt_t comes from minimap.h
 	mm_mapopt_t opt;
 
 	// stores indexing options, used when reading/constructing indexes.
+	// comes from ketop.h
 	mm_idxopt_t ipt;
 
 	// pay attention to n_threads in the milticore pipeline
@@ -156,9 +163,11 @@ int main(int argc, char *argv[])
 	FILE *fp_help = stderr;
 
 	// idx_rdr: the index reader (reads .mmi files), in minimap2, there is an option to run it using an index file
+	// comes from minimap.h
 	mm_idx_reader_t *idx_rdr;
 
 	// a pointer to an index structure, e.g., the minimizer index being mapped against
+	// comes from minimap.h
 	mm_idx_t *mi;
 
 	// Sets logging verbosity level.
@@ -176,10 +185,12 @@ int main(int argc, char *argv[])
 	mm_realtime0 = realtime();
 
 	// initializes ipt and opt with default values.
+	// this function comes from minimap.h and defined in options.c
 	mm_set_opt(0, &ipt, &opt);
 
 
 	while ((c = ketopt(&o, argc, argv, 1, opt_str, long_options)) >= 0) { // test command line options and apply option -x/preset first
+
 		if (c == 'x') {
 
 			// handling the -x option first, which sets a preset configuration for the mapper
@@ -312,6 +323,7 @@ int main(int argc, char *argv[])
 			if (mm_verbose >= 2)
 				fprintf(stderr, "[WARNING]\033[1;31m option -S is deprecated and may be removed in future. Please use --cs=long instead.\033[0m\n");
 		} else if (c == 'V') {
+			// print version and return
 			puts(MM_VERSION);
 			return 0;
 		} else if (c == 'f') {
@@ -341,6 +353,8 @@ int main(int argc, char *argv[])
 			if (*s == ',') opt.e2 = strtol(s + 1, &s, 10);
 		}
 	}
+
+	// print an error message for handling invalid args
 	if ((opt.flag & MM_F_SPLICE) && (opt.flag & MM_F_FRAG_MODE)) {
 		fprintf(stderr, "[ERROR]\033[1;31m --splice and --frag should not be specified at the same time.\033[0m\n");
 		return 1;
@@ -425,6 +439,7 @@ int main(int argc, char *argv[])
 	}
 	if (opt.best_n == 0 && (opt.flag&MM_F_CIGAR) && mm_verbose >= 2)
 		fprintf(stderr, "[WARNING]\033[1;31m `-N 0' reduces alignment accuracy. Please use --secondary=no to suppress secondary alignments.\033[0m\n");
+		
 	while ((mi = mm_idx_reader_read(idx_rdr, n_threads)) != 0) {
 		int ret;
 		if ((opt.flag & MM_F_CIGAR) && (mi->flag & MM_I_NO_SEQ)) {

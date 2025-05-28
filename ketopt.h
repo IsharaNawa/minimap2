@@ -16,6 +16,7 @@ typedef struct {
 	int i, pos, n_args;
 } ketopt_t;
 
+// useful for managing arguments
 typedef struct {
 	char *name;
 	int has_arg;
