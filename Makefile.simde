@@ -9,8 +9,8 @@ LIBS=		-lm -lz -lpthread
 
 CC = riscv64-unknown-linux-gnu-gcc
 
-INCLUDES+=-I/home/kisarul/riscv_tools/riscv-gnu-toolchain/binutils/zlib
-LIBS+=-static -L/home/kisarul/riscv_tools/riscv-gnu-toolchain/binutils/zlib
+INCLUDES+=-I/home/ishara/PhD/lib/riscv-gnu-toolchain/binutils/zlib
+LIBS+=-static -L/home/ishara/PhD/lib/riscv-gnu-toolchain/binutils/zlib
 CFLAGS+=-march=rv64gcv -static
 
 ifneq ($(arm_neon),) # if arm_neon is defined
