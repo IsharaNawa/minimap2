@@ -9,7 +9,7 @@ LIBS=		-lm -lz -lpthread
 
 CC = riscv64-unknown-linux-gnu-gcc
 
-INCLUDES += -I/home/ishara/PhD/lib/riscv_tools/riscv-gnu-toolchain/binutils/zlib
+INCLUDES += -I/home/ishara/PhD/lib/riscv_tools/riscv-gnu-toolchain/binutils/zlib -I/home/ishara/PhD/lib/simde
 LIBS+=-static -L/home/ishara/PhD/lib/riscv_tools/riscv-gnu-toolchain/binutils/zlib
 CFLAGS+=-march=rv64gcv -static
 
